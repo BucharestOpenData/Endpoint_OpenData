@@ -1,0 +1,33 @@
+[Unit]
+# Human readable name of the unit
+Description=Python GTFS Query and Collection Server 
+Requires=network.target
+Requires=mariadb.service
+After=network.target
+After=mariadb.service
+After=multi-user.target
+[Service]
+Type=simple
+User=python_systemd_usr
+#AppDirectory=/usr/bin/python_daemons/query_srv
+WorkingDirectory=/usr/bin/python_daemons/query_srv
+#VirtualEnvironment=/usr/bin/python_daemons/query_srv/venv
+Environment=PATH=/usr/bin/python_daemons/query_srv/venv/bin:$PATH
+Environment=VIRTUAL_ENV=/usr/bin/python_daemons/query_srv/venv
+
+EnvironmentFile=/usr/bin/python_daemons/query_srv/env.progconf
+
+#Environment="$VIRTUAL_ENV=$VirtualEnvironment"
+#ExecStartPre=source /usr/bin/python_daemons/query_srv/venv/bin/activate
+ExecStart=/bin/sh -c "source ./venv/bin/activate &&   /usr/bin/python_daemons/query_srv/venv/bin/python   /usr/bin/python_daemons/query_srv/gtfs-query.py  --port $app_port  -d False -dp $db_port -db $db_name --ip_address $ip_addr -u $db_u -pw $db_p -t $pool_time -thu $th_user_alert --th_password $th_passwd --th_psg_user $psg_u --th_psg_password $psg_p"
+#ExecStop=/bin/kill -s SIGINT -$MAINPID & /bin/kill -s SIGINT -$MAINPID   
+KillSignal=SIGINT
+SyslogLevel=debug
+StandardOutput=journal
+StandardError=journal
+
+SyslogIdentifier=gtfs-server
+SyslogFacility=daemon
+#Restart=on-failure
+[Install]
+WantedBy=multi-user.target

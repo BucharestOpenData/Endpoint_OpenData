@@ -1,0 +1,292 @@
+openapi: 3.0.0
+info:
+  title: GTFS Query Buffer Server API
+  version: 1.0.0
+paths:
+  /api:
+    get:
+      summary: Get cached serialized output of latest real-time data for all vehicles
+      operationId: getCachedOutputRealTime
+      responses:
+        '200':
+          description: Successful response with cached serialized output in JSON format for all vehicles in real-time
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseRealTime'
+
+  /api/psg:
+    get:
+      summary: Get vehicles with passenger information
+      operationId: getPassengerVehicles
+      responses:
+        '200':
+          description: Successful response with passenger vehicle information
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseRealTime'
+
+  /api/traffic_data_jams:
+    get:
+      summary: Get latest geojson serialized data of traffic jams
+      operationId: getTrafficDataJams
+      responses:
+        '200':
+          description: Successful response with jams geojson data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoJSON'
+        '204':
+          description: No data available
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<HTML>No data <BR>"
+
+  /api/traffic_data_alerts:
+    get:
+      summary: Get latest geojson serialized data of Traffic jams
+      operationId: getTrafficDataAlerts
+      responses:
+        '200':
+          description: Successful response with Traffic jams geojson data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoJSON'
+        '204':
+          description: No data available
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<HTML>No data <BR>"
+
+
+  /api/traffic_jams_query_date:
+    get:
+      summary: Get Traffic jams data by date interval
+      operationId: getTrafficJamsQueryDate
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful response with Traffic jams IDs and dates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrafficJamsByDateResponse'
+
+  /api/traffic_jams_query_id:
+    get:
+      summary: Get Traffic jams data by ID
+      operationId: getTrafficJamsQueryId
+      parameters:
+        - name: geojson_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response with Traffic jams geojson data by ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoJSON'
+
+
+
+components:
+  schemas:
+    InvalidPathErrorResponse:
+      description: HTML
+      type: string
+      example: "<HTML>Invalid Request<BR>"
+
+    ResponseRealTime:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1234
+
+
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-09-12T07:54:57+00:00"
+
+        src:
+          type: integer
+          enum:
+            - 4
+            - 3
+            - 2
+            - 1
+          example: 4
+        vehicle:
+          type: object
+          properties:
+            trip:
+              type: object
+              properties:
+                trip_id:
+                  type: string
+                  example:  "None"
+                route_id:
+                  type: integer
+                  example: 48
+                direction_id:
+                  type: integer
+                  enum:
+                    - 0
+                    - 1
+                  example: 0
+                start_time:
+                  type: string
+                  format: date-time
+                  example: "2024-09-12T10:28:00+00:00"
+
+            vehicle:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1234
+                th_id:
+                  type: integer
+                  example: 5678
+                license_plate:
+                  type: string
+                  example: "B02662"
+            position:
+              type: object
+              properties:
+                latitude:
+                  type: number
+                  example: 44.44356155395508
+                longitude:
+                  type: number
+                  example: 26.129610061645508
+                timestamp:
+                  type: string
+                  format: date-time
+                  example: "2024-09-12T07:54:57+00:00"
+            passenger_info:
+              type: object
+              properties:
+                on_board:
+                  type: integer
+                  example: 0
+                timestamp:
+                  type: string
+                  format: date-time
+                  example: "2024-09-12T07:55:18+00:00"
+                in:
+                  type: integer
+                  example: 10
+                out:
+                  type: integer
+                  example: 10
+
+
+
+
+
+
+
+
+
+    GeoJSON:
+      type: object
+      required:
+        - type
+        - features
+      properties:
+        type:
+          type: string
+          enum:
+            - FeatureCollection
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+
+    Feature:
+      type: object
+      required:
+        - type
+        - geometry
+        - properties
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        geometry:
+          $ref: '#/components/schemas/Geometry'
+        properties:
+          type: object
+
+    Geometry:
+      type: object
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - Point
+            - LineString
+            - Polygon
+            - MultiPoint
+            - MultiLineString
+            - MultiPolygon
+        coordinates:
+          type: array
+          description: Array of GeoJSON coordinates
+          items:
+              - type: array
+                items:
+                  oneOf:
+                    - type: number
+                    - type: array
+                      items:
+                        type: number
+
+    TrafficJamsByDateResponse:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            example: '{placeholder}'
+        start_date:
+          type: string
+          format: date-time
+          example: '{placeholder}'
+        end_date:
+          type: string
+          format: date-time
+          example: '{placeholder}'
